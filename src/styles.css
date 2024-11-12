@@ -42,12 +42,38 @@ main {
   background-color: #1d1d1d;
 }
 
-#left-panel .profile {
+#left-panel .servers {
   width: 50px;
   height: 50px;
   border-radius: 100%;
   background-color: crimson;
 }
+
+#left-panel .create-server {
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  margin-bottom: auto;
+  background-color: #28A944;
+}
+
+#left-panel .join-server {
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  margin-bottom: auto;
+  background-color: #4080E0;
+}
+
+#left-panel .profile {
+  width: 50px;
+  height: 50px;
+  border-radius: 100%;
+  margin-bottom:auto;
+  background-color: #FF0000;
+}
+
+
 
 /*---------------------------------------------------------------------*/
 
@@ -62,8 +88,6 @@ main {
 #middle-panel input {
   height: 40px;
   margin-top: auto;
-  border: none;
-  border-radius: 0;
   color: white;
 }
 
