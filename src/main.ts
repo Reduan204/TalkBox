@@ -1,5 +1,11 @@
 import { invoke } from "@tauri-apps/api/core";
 
+type Message = {
+  username: string;
+  content: string;
+};
+
+// ----------------------------------------
 function toggleJoinPanel() {
   const joinPanel = document.getElementById("join-panel");
   const mainElement = document.querySelector("main");
@@ -14,6 +20,7 @@ function toggleJoinPanel() {
   }
 }
 
+// ----------------------------------------
 async function displayUsers() {
   try {
     const usernames: string[] = await invoke("get_users");
@@ -32,6 +39,7 @@ async function displayUsers() {
   }
 }
 
+// ----------------------------------------
 async function updateUserCount() {
   try {
     const userCount: string = await invoke("get_users_len");
@@ -44,12 +52,65 @@ async function updateUserCount() {
   }
 }
 
+// ----------------------------------------
+
+function displayMessages(messages: Message[]) {
+  const container = document.getElementById("chat");
+  container.innerHTML = ""; // Clear previous messages
+
+  messages.forEach((msg) => {
+    // Create elements for the message structure
+    const messageDiv = document.createElement("div");
+    messageDiv.className = "message";
+
+    const profileDiv = document.createElement("div");
+    profileDiv.className = "profile";
+
+    const mainDiv = document.createElement("div");
+    mainDiv.className = "main";
+
+    const usernameH5 = document.createElement("h5");
+    usernameH5.textContent = msg.username;
+
+    const messageP = document.createElement("p");
+    messageP.textContent = msg.content;
+
+    // Append elements to their parent containers
+    mainDiv.appendChild(usernameH5);
+    mainDiv.appendChild(messageP);
+    messageDiv.appendChild(profileDiv);
+    messageDiv.appendChild(mainDiv);
+    container.appendChild(messageDiv);
+  });
+}
+
+// ----------------------------------------
+async function sendMessage() {
+  const messageInput = document.getElementById("message-maker") as HTMLInputElement;
+
+  if (messageInput) {
+    const content = messageInput.value.trim();
+
+    if (content) {
+      try {
+        await invoke("send_message", { content });
+        console.log("Message sent:", content);
+        messageInput.value = "";
+      } catch (error) {
+        console.error("Failed to send message:", error);
+      }
+    }
+  }
+}
+
+// ----------------------------------------
 async function createServer() {
   invoke("create_server")
     .then(() => console.log("Server created"))
     .catch((error) => console.error(error));
 }
 
+// ----------------------------------------
 async function joinServer() {
   const usernameInput = document.getElementById("username-input");
   const serverIPInput = document.getElementById("server-ip-input");
@@ -86,5 +147,18 @@ window.addEventListener("DOMContentLoaded", () => {
     displayUsers();
     toggleJoinPanel();
   });
+
+  document.getElementById("message-maker")?.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      sendMessage();
+    }
+  });
+
+  const messages: Message[] = [
+    { username: "BOT-0", content: "Hello World!" },
+    { username: "BOT-1", content: "yes" },
+  ];
+
+  displayMessages(messages);
 });
 
