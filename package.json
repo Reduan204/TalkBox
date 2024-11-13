@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
-    "@tauri-apps/plugin-shell": "^2"
+    "@tauri-apps/plugin-shell": "^2",
+    "typescript-language-server": "^4.3.3"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",

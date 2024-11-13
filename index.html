@@ -11,12 +11,13 @@
   <body>
     <main>
       <div id="left-panel">
+        <!--TODO: Replace this with button-->
         <a href="" class="profile"><div></div></a>
         <a href="" class="profile"><div></div></a>
         <a href="" class="profile"><div></div></a>
         <div id="main-creator-panel">
-          <a href="" class="profile"><div id="join-server"></div></a>
-          <a href="" class="profile"><div id="create-server"></div></a>
+          <button id="join-server" type="menu" class="profile"></button>
+          <button id="create-server" type="menu" class="profile"></button>
         </div>
       </div>
       <!--------------------------------------------------------------------->
@@ -27,27 +28,13 @@
           <h3>Server</h3>
         </div>
         <div id="chat">
-          <div class="message">
-            <div class="profile"></div>
-            <div class="main">
-              <h5>Username</h5>
-              <p>MSG</p>
-            </div>
-          </div>
-          <div class="message">
-            <div class="profile"></div>
-            <div class="main">
-              <h5>Username</h5>
-              <p>MSG</p>
-            </div>
-          </div>
-          <div class="message">
-            <div class="profile"></div>
-            <div class="main">
-              <h5>Username</h5>
-              <p>MSG</p>
-            </div>
-          </div>
+          <!--<div class="message">-->
+          <!--  <div class="profile"></div>-->
+          <!--  <div class="main">-->
+          <!--    <h5>Username</h5>-->
+          <!--    <p>MSG</p>-->
+          <!--  </div>-->
+          <!--</div>-->
         </div>
         <input type="text" name="Input" value="">
       </div>
@@ -55,6 +42,12 @@
       <div id="right-panel">
         <h1>INFO</h1>
         <hr style="width: 80%; height: 3px; background-color: #fff; border: none;">
+      </div>
+      <!--------------------------------------------------------------------->
+      <div id="join-panel">
+        <input id="username-input" type="text" name="Username" value="" placeholder="Username">
+        <input id="server-ip-input" type="text" name="Connect" value="" placeholder="IP">
+        <button id="connect-btn" type="submit">CONNECT</button>
       </div>
     </main>
   </body>
