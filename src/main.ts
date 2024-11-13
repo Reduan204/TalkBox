@@ -1,4 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
+import { listen } from '@tauri-apps/api/event';
 
 type Message = {
   username: string;
@@ -6,17 +7,20 @@ type Message = {
 };
 
 // ----------------------------------------
-function toggleJoinPanel() {
-  const joinPanel = document.getElementById("join-panel");
-  const mainElement = document.querySelector("main");
+async function togglePanel(panelName: string) {
+  const panel = document.getElementById(panelName);
 
-  // Toggle the visibility of join-panel
-  if (joinPanel.style.display === "flex") {
-    joinPanel.style.display = "none";
-    mainElement.style.filter = "none";
-  } else { // TODO: Maybe some blur?
-    joinPanel.style.display = "flex";
-    //mainElement.style.filter = "blur(40px)";
+  // Check if the panel exists before toggeling
+  if (!panel) {
+    console.error(`Panel with ID '${panelName}' not found.`);
+    return;
+  }
+
+  // Toggle the visibility of the panel
+  if (panel.style.display === "flex") {
+    panel.style.display = "none";
+  } else {
+    panel.style.display = "flex";
   }
 }
 
@@ -53,38 +57,6 @@ async function updateUserCount() {
 }
 
 // ----------------------------------------
-
-function displayMessages(messages: Message[]) {
-  const container = document.getElementById("chat");
-  container.innerHTML = ""; // Clear previous messages
-
-  messages.forEach((msg) => {
-    // Create elements for the message structure
-    const messageDiv = document.createElement("div");
-    messageDiv.className = "message";
-
-    const profileDiv = document.createElement("div");
-    profileDiv.className = "profile";
-
-    const mainDiv = document.createElement("div");
-    mainDiv.className = "main";
-
-    const usernameH5 = document.createElement("h5");
-    usernameH5.textContent = msg.username;
-
-    const messageP = document.createElement("p");
-    messageP.textContent = msg.content;
-
-    // Append elements to their parent containers
-    mainDiv.appendChild(usernameH5);
-    mainDiv.appendChild(messageP);
-    messageDiv.appendChild(profileDiv);
-    messageDiv.appendChild(mainDiv);
-    container.appendChild(messageDiv);
-  });
-}
-
-// ----------------------------------------
 async function sendMessage() {
   const messageInput = document.getElementById("message-maker") as HTMLInputElement;
 
@@ -103,49 +75,80 @@ async function sendMessage() {
   }
 }
 
+async function loadMessages() {
+  try {
+    const messages: Message[] = await invoke("get_messages");
+    const messagesContainer = document.getElementById("chat");
+
+    if (messagesContainer) {
+      messagesContainer.innerHTML = '';
+
+      messages.forEach((message: any) => {
+        const messageElement = document.createElement("div");
+        messageElement.classList.add("message");
+        messageElement.innerHTML = `
+          <div class="profile"></div>
+          <hr>
+          <h5>${message.username}</h5>
+          <p>${message.content}</p>
+        `;
+        messagesContainer.appendChild(messageElement);
+      });
+    }
+  } catch (error) {
+    console.error("Failed to load messages:", error);
+  }
+}
+
 // ----------------------------------------
 async function createServer() {
-  invoke("create_server")
+  const serverIPInput = document.getElementById("s-server-ip-input") as HTMLInputElement;
+
+  const ip = serverIPInput.value;
+
+  invoke("create_server", { ip })
     .then(() => console.log("Server created"))
     .catch((error) => console.error(error));
 }
 
 // ----------------------------------------
 async function joinServer() {
-  const usernameInput = document.getElementById("username-input");
-  const serverIPInput = document.getElementById("server-ip-input");
+  const usernameInput = document.getElementById("j-username-input") as HTMLInputElement;
+  const serverIPInput = document.getElementById("j-server-ip-input") as HTMLInputElement;
 
   const username = usernameInput.value;
   const ip = serverIPInput.value;
 
   invoke("join_server", { ip, username })
-    .then(() => {
-      console.log("Joined server")
-      updateUserCount();
-      displayUsers();
-    })
+    .then(() => console.log("Joined server"))
     .catch((error) => console.error(error));
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  updateUserCount();
-  displayUsers();
+listen("user_count_changed", () => { updateUserCount(); });
+listen("user_list_updated", () => { displayUsers(); });
+listen("new_message", () => { loadMessages(); });
 
-  const createServerButton = document.querySelector("#create-server");
+window.addEventListener("DOMContentLoaded", () => {
+  const serverPanelButton = document.querySelector("#create-server");
+  serverPanelButton?.addEventListener("click", () => {
+    togglePanel("server-panel");
+  });
+
+  const createServerButton = document.querySelector("#j-create-server");
   createServerButton?.addEventListener("click", () => {
     createServer();
+    togglePanel("server-panel");
   });
 
   const joinServerButton = document.querySelector("#join-server");
   joinServerButton?.addEventListener("click", () => {
-    toggleJoinPanel();
+    togglePanel("join-panel");
   });
 
-  const connectButton = document.getElementById("connect-btn");
+  const connectButton = document.getElementById("j-connect-btn") as HTMLButtonElement;
   connectButton.addEventListener("click", () => {
     joinServer();
-    displayUsers();
-    toggleJoinPanel();
+    togglePanel("join-panel");
   });
 
   document.getElementById("message-maker")?.addEventListener("keydown", (event) => {
@@ -153,12 +156,7 @@ window.addEventListener("DOMContentLoaded", () => {
       sendMessage();
     }
   });
-
-  const messages: Message[] = [
-    { username: "BOT-0", content: "Hello World!" },
-    { username: "BOT-1", content: "yes" },
-  ];
-
-  displayMessages(messages);
 });
 
+// Global variables
+(window as any).togglePanel = togglePanel;

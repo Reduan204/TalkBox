@@ -12,9 +12,6 @@
     <main>
       <div id="left-panel">
         <!--TODO: Replace this with button-->
-        <a href="" class="profile"><div></div></a>
-        <a href="" class="profile"><div></div></a>
-        <a href="" class="profile"><div></div></a>
         <div id="main-creator-panel">
           <button id="join-server" type="menu" class="profile"></button>
           <button id="create-server" type="menu" class="profile"></button>
@@ -27,15 +24,7 @@
           <div id="server-icon"></div>
           <h3>Server</h3>
         </div>
-        <div id="chat">
-          <!--<div class="message">-->
-          <!--  <div class="profile"></div>-->
-          <!--  <div class="main">-->
-          <!--    <h5>Username</h5>-->
-          <!--    <p>MSG</p>-->
-          <!--  </div>-->
-          <!--</div>-->
-        </div>
+        <div id="chat"></div>
         <input id="message-maker" type="text" name="Input" value="" placeholder="Aa">
       </div>
       <!--------------------------------------------------------------------->
@@ -47,10 +36,17 @@
         </div>
       </div>
       <!--------------------------------------------------------------------->
-      <div id="join-panel">
-        <input id="username-input" type="text" name="Username" value="" placeholder="Username">
-        <input id="server-ip-input" type="text" name="Connect" value="localhost:8080" placeholder="IP">
-        <button id="connect-btn" type="submit">CONNECT</button>
+      <div id="join-panel" class="panelized">
+        <input id="j-username-input" type="text" name="Username" value="" placeholder="Username" required>
+        <input id="j-server-ip-input" type="text" name="Connect" value="127.0.0.1:7777" placeholder="IP" required>
+        <button id="j-connect-btn" type="submit">CONNECT</button>
+        <button type="submit" onclick="togglePanel('join-panel')">BACK</button>
+      </div>
+
+      <div id="server-panel" class="panelized">
+        <input id="s-server-ip-input" type="text" name="Create" value="127.0.0.1:7777" placeholder="IP" required>
+        <button id="j-create-server" type="submit">CREATE</button>
+        <button type="submit" onclick="togglePanel('server-panel')">BACK</button>
       </div>
     </main>
   </body>
