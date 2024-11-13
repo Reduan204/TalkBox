@@ -183,6 +183,7 @@ input[type="text"], textarea {
   background-color: #1d1d1d;
   border-left: 2px solid #151515;
   align-items: center;
+  gap: 12px;
 }
 
 #right-panel h1 {
