@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use std::sync::Mutex;
 
+use once_cell::sync::Lazy;
 use serde::Deserialize;
 use serde::Serialize;
 use tokio::io::AsyncReadExt;
@@ -25,56 +26,58 @@ struct User {
     username: String,
 }
 
+// Rust's thread safe BS
+static USERS: Lazy<Arc<Mutex<Vec<User>>>> = Lazy::new(|| Arc::new(Mutex::new(Vec::new())));
+
 #[tauri::command]
 async fn create_server() -> Result<(), String> {
-    // Rust's thread safe BS
-    let users: Arc<Mutex<Vec<User>>> = Arc::new(Mutex::new(Vec::new()));
-
     let listener = TcpListener::bind("127.0.0.1:8080").await.map_err(|e| e.to_string())?;
     println!("Server created at 127.0.0.1:8080");
 
     // This is not japan's tokio that we are using
     tokio::spawn(async move {
-        let users = Arc::clone(&users);
         while let Ok((mut socket, _)) = listener.accept().await {
             println!("Client connected: {:?}", socket.peer_addr());
 
-            // We are creating a buffer to store some data inside of it
+            // ----------
             let mut buffer = vec![0; 1024];
-            let _ = socket.read(&mut buffer).await;
-
-            let msg: ClientMessages = match serde_json::from_slice(&buffer) {
-            Ok(msg) => msg,
-            Err(_) => {
-                    // Send error message if the incoming message is shit
-                    let error_msg = ServerMessages::ServerError {
-                        message: "Invalid message format".to_string(),
-                    };
-                    socket.write_all(&serde_json::to_vec(&error_msg).unwrap()).await.unwrap();
+            let bytes_read = match socket.read(&mut buffer).await {
+                Ok(size) if size > 0 => size,
+                Ok(_) => continue,
+                Err(e) => {
+                    eprintln!("Failed to read from socket: {}", e);
                     continue;
                 }
             };
 
-            // FIX: MSG not received
+            // ----------
+            let msg = match serde_json::from_slice::<ClientMessages>(&buffer[..bytes_read]) {
+                Ok(msg) => msg,
+                Err(_) => {
+                    let error_msg = ServerMessages::ServerError {
+                        message: "Invalid message format".to_string(),
+                    };
+                    let _ = socket.write_all(&serde_json::to_vec(&error_msg).unwrap()).await;
+                    continue;
+                }
+            };
 
+            // ----------
             match msg {
                 ClientMessages::Connect { username } => {
-                    // Create new user
                     let new_user = User {
                         username: username.clone(),
                     };
 
-                    // Send confirmation message back to the client
-                    let server_msg = ServerMessages::Connected {
-                        username,
-                    };
-                    socket.write_all(&serde_json::to_vec(&server_msg).unwrap()).await.unwrap();
+                    // Send confirmation message back to client
+                    let server_msg = ServerMessages::Connected { username: username.clone() };
+                    if socket.write_all(&serde_json::to_vec(&server_msg).unwrap()).await.is_ok() {
+                        println!("New user connected: {}", username);
 
-                    println!("New User: {}", new_user.username);
-
-                    // Add new user to the server
-                    let mut users_lock = users.lock().unwrap();
-                    users_lock.push(new_user);
+                        // Add new user to the server user list
+                        let mut users_lock = USERS.lock().unwrap();
+                        users_lock.push(new_user);
+                    }
                 }
                 ClientMessages::Message { content: _ } => {} // TODO: Send message content's
                 _ => {}
@@ -90,20 +93,35 @@ async fn join_server(ip: &str, username: &str) -> Result<(), String> {
     let mut stream = TcpStream::connect(ip).await.map_err(|e| e.to_string())?;
     println!("Connected to the server at {ip}");
 
-    // This will create new message to send to the server
-    // The message is then serialized / turned into json file then convert it into bytes
-    // TODO: Handle errors properly by not using unwrap, use expect or something
+    // Create the connect message
     let connect_message = ClientMessages::Connect { username: username.to_string() };
-    let _ = stream.write_all(serde_json::to_string(&connect_message).unwrap().as_bytes()).await;
+
+    // Serialize the message to JSON and write it to the stream
+    let message_json = serde_json::to_string(&connect_message).map_err(|e| e.to_string())?;
+    stream.write_all(message_json.as_bytes()).await.map_err(|e| e.to_string())?;
+    stream.flush().await.map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[tauri::command]
+async fn get_users() -> Result<Vec<String>, String> {
+    let users_lock = USERS.lock().map_err(|e| e.to_string())?;
+    let usernames: Vec<String> = users_lock.iter().map(|user| user.username.clone()).collect();
+    Ok(usernames)
+}
+
+#[tauri::command]
+async fn get_users_len() -> Result<String, String> {
+    let users_lock = USERS.lock().map_err(|e| e.to_string())?;
+    Ok(users_lock.len().to_string())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
-        .invoke_handler(tauri::generate_handler![join_server, create_server])
+        .invoke_handler(tauri::generate_handler![join_server, create_server, get_users, get_users_len])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
