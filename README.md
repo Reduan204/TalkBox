@@ -1,7 +1,5 @@
-# Tauri + Vanilla TS
+# TalkBox
 
-This template should help get you started developing with Tauri in vanilla HTML, CSS and Typescript.
+![image](https://github.com/user-attachments/assets/a2d7406a-6ed8-4ac6-aa4e-5265bddfad67)
 
-## Recommended IDE Setup
-
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+TalkBox allows you to create and join chat-rooms that you can host
