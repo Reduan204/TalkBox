@@ -45,12 +45,15 @@ async function displayUsers() {
 
 // ----------------------------------------
 async function updateUserCount() {
+  console.log("USR-0");
+  
   try {
     const userCount: string = await invoke("get_users_len");
     const totalUsersElement = document.getElementById("total-users");
     if (totalUsersElement) {
       totalUsersElement.textContent = `Total Users: ${userCount}`;
     }
+    console.log("Count: " + userCount);
   } catch (error) {
     console.error("Failed to fetch user count:", error);
   }
@@ -129,6 +132,10 @@ listen("user_list_updated", () => { displayUsers(); });
 listen("new_message", () => { loadMessages(); });
 
 window.addEventListener("DOMContentLoaded", () => {
+  updateUserCount();
+  displayUsers();
+  loadMessages();
+
   const serverPanelButton = document.querySelector("#create-server");
   serverPanelButton?.addEventListener("click", () => {
     togglePanel("server-panel");
@@ -158,5 +165,6 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 
-// Global variables
+// Global methods
 (window as any).togglePanel = togglePanel;
+(window as any).updateUserCount = updateUserCount;

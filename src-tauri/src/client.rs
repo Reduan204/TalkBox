@@ -1,3 +1,5 @@
+use tauri::State;
+use tokio::sync::RwLock;
 use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
 
 use crate::messages::*;
@@ -5,6 +7,18 @@ use crate::messages::*;
 pub struct Client {
     id: String,
     stream: TcpStream,
+}
+
+#[tauri::command]
+pub async fn join_server(ip: &str, username: &str, state: State<'_, RwLock<Option<Client>>>) -> Result<(), String> {
+    let mut client_lock = state.write().await;
+
+    if client_lock.is_none() {
+        let client = Client::new(ip, username).await?;
+        *client_lock = Some(client);
+    }
+
+    Ok(())
 }
 
 impl Client {
@@ -61,5 +75,17 @@ impl Client {
         self.stream.flush().await.map_err(|e| format!("Flush error: {}", e))?;
 
         Ok(())
+    }
+}
+
+#[tauri::command]
+pub async fn send_message(content: String, state: State<'_, RwLock<Option<Client>>>) -> Result<(), String> {
+    let mut client_lock = state.write().await;
+    
+    if let Some(client) = client_lock.as_mut() {
+        client.send_message(content).await.map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("Client is not connected".to_string())
     }
 }

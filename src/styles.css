@@ -131,7 +131,6 @@ input[type="text"], textarea {
   height: 100%;
   gap: 6px;
   padding: 12px;
-  padding-bottom: 0;
 }
 
 #middle-panel #chat .profile {
